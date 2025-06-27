@@ -9,6 +9,33 @@ module fsm(
     input [3:0] fifo_words
 );
 
-// insira seu código aqui
+    reg [1:0] state, next_state;
 
+
+    parameter WRITING    = 2'd0;
+    parameter WAIT_STOP  = 2'd1;
+    parameter WAIT_DRAIN = 2'd2;
+
+    assign fifo_data = 8'hAA; 
+
+
+    always @(posedge clk) begin
+        state <= (!rst_n) ? WRITING : next_state;
+    end
+    always @(*) begin
+        case (state)
+            WRITING: next_state <= (fifo_words >= 4'd5) ? WAIT_STOP : WRITING;
+            WAIT_STOP: next_state <= WAIT_DRAIN;
+            WAIT_DRAIN: next_state <= (fifo_words <= 4'd2) ? WRITING : WAIT_DRAIN;
+            default: next_state = WRITING;
+        endcase
+    end
+
+    
+    always @(*) begin
+        case (state)
+            WRITING: wr_en = 1'b1;
+            default: wr_en = 1'b0;
+        endcase
+    end
 endmodule
